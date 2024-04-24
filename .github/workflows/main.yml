@@ -3,6 +3,7 @@ name: Pull QMD File
 on:
   schedule:
     - cron: '0 0 * * *'  # Runs at 00:00 UTC every day
+  workflow_dispatch:  # This line allows manual runs
 
 jobs:
   check-and-pull-qmd:
