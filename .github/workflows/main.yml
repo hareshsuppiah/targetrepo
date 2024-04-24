@@ -1,40 +1,52 @@
 name: Pull QMD Files
 
+# Triggers for the workflow:
+# - Scheduled to run daily at midnight UTC.
+# - Can also be manually triggered via the GitHub Actions UI.
 on:
   schedule:
-    - cron: '0 0 * * *'  # Runs at 00:00 UTC every day
+    - cron: '0 0 * * *'
   workflow_dispatch:
 
 jobs:
   pull-qmd-files:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest  # Specifies the runner environment. 
+
     steps:
+      # Step 1: Checkout the source repository.
+      # Customize 'repository' and 'token' with source repository details and GitHub secret token name.
       - name: Checkout source repository
         uses: actions/checkout@v2
         with:
-          repository: hareshsuppiah/sourcerepo
-          token: ${{ secrets.GH_TOKEN }}
-          fetch-depth: 0
-          path: source
+          repository: hareshsuppiah/sourcerepo  # Replace 'hareshsuppiah/sourcerepo' with your repository path.
+          token: ${{ secrets.GH_TOKEN }}  # Ensure you have a secret named GH_TOKEN with the appropriate permissions. Place in repo secrets
+          fetch-depth: 0  # Fetches all history for all branches and tags.
+          path: source  # Directory under 'source' will contain the repo files.
 
+      # Step 2: Find and copy .qmd files to a temporary directory.
+      # Adjust the file pattern if you are targeting different file types or directories.
       - name: Find and Copy QMD Files
         run: |
-          mkdir -p temp-repo
-          find source -type f -name "*.qmd" -exec cp {} temp-repo/ \;
+          mkdir -p temp-repo  # Creates a temporary directory to store files.
+          find source -type f -name "*.qmd" -exec cp {} temp-repo/ \;  # Modify "*.qmd" to match other file types if necessary.
 
+      # Step 3: Checkout the target repository where files will be copied to.
+      # Customize 'repository', 'token', and 'path' with your target repository details.
       - name: Checkout target repository
         uses: actions/checkout@v2
         with:
-          repository: hareshsuppiah/targetrepo
-          token: ${{ secrets.GH_TOKEN }}
-          path: target
+          repository: hareshsuppiah/targetrepo  # Replace 'hareshsuppiah/targetrepo' with target repository 
+          token: ${{ secrets.GH_TOKEN }}  # Uses the same token as abov, assuming it has access to both repos.
+          path: target  # Directory under 'target' will contain the repo files. May need to edit this based on where the files need to be pulled into for the website repo
 
+      # Step 4: Copy the QMD files to the target repository and commit the changes.
+      # Modify this step if the file handling or commit message needs customization.
       - name: Copy QMD Files to Target Repository
         run: |
-          cp temp-repo/*.qmd target/
+          cp temp-repo/*.qmd target/  # Copies all .qmd files. Adjust the pattern as necessary.
           cd target
-          git config user.email "haresh@humanperformance.sg"
-          git config user.name "hareshsuppiah"
-          git add .
-          git commit -m "Update QMD files from source repository"
-          git push
+          git config user.email "haresh@humanperformance.sg"  # Set your email. Customize as needed.
+          git config user.name "hareshsuppiah"  # Set GitHub username. Edit as needed.
+          git add .  # Adds all new or modified files to the staging area.
+          git commit -m "Update QMD files from source repository"  # Customize the commit message as necessary.
+          git push  # Pushes the commit to the current branch of the remote repository.
