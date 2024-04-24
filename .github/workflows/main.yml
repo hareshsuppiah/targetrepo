@@ -1,0 +1,45 @@
+name: Pull QMD File
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Runs at 00:00 UTC every day
+
+jobs:
+  check-and-pull-qmd:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source repository
+        uses: actions/checkout@v2
+        with:
+          repository: hareshsuppiah/sourcerepo
+          token: ${{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}}
+          fetch-depth: 0
+
+      - name: Find QMD file
+        id: findfile
+        run: |
+          echo "Looking for QMD files..."
+          qmd_files=$(find . -type f -name "*.qmd")
+          if [ -z "$qmd_files" ]; then
+            echo "::set-output name=QMD_EXISTS::false"
+          else
+            echo "::set-output name=QMD_EXISTS::true"
+            echo "::set-output name=QMD_FILES::$qmd_files"
+          fi
+
+      - name: Clone target repository and push QMD files
+        if: steps.findfile.outputs.QMD_EXISTS == 'true'
+        run: |
+          git config --global user.email "your-email@example.com"
+          git config --global user.name "Your Name"
+          git clone https://github.com/your-username/target-repo.git temp-repo
+          cd temp-repo
+          for file in ${{ steps.findfile.outputs.QMD_FILES }}; do
+            mkdir -p $(dirname "$file")
+            cp "../$file" "$file"
+          done
+          git add .
+          git commit -m "Update QMD files"
+          git push
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
