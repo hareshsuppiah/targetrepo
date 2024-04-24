@@ -17,30 +17,29 @@ jobs:
           fetch-depth: 0
 
       - name: Find QMD file
-        id: findfile
         run: |
           echo "Looking for QMD files..."
           qmd_files=$(find . -type f -name "*.qmd")
           if [ -z "$qmd_files" ]; then
-            echo "::set-output name=QMD_EXISTS::false"
+            echo "QMD_EXISTS=false" >> $GITHUB_ENV
           else
-            echo "::set-output name=QMD_EXISTS::true"
-            echo "::set-output name=QMD_FILES::$qmd_files"
+            echo "QMD_EXISTS=true" >> $GITHUB_ENV
+            echo "QMD_FILES=$qmd_files" >> $GITHUB_ENV
           fi
 
       - name: Clone target repository and push QMD files
-        if: steps.findfile.outputs.QMD_EXISTS == 'true'
+        if: env.QMD_EXISTS == 'true'
         run: |
-          git config --global user.email "haresh@humanperformance.sg"
-          git config --global user.name "hareshsuppiah"
-          git clone https://github.com/hareshsuppiah/sourcerepo.git targetrepo
-          cd targetrepo
-          for file in ${{ steps.findfile.outputs.QMD_FILES }}; do
+          git config user.email "haresh@humanperformance.sg"
+          git config user.name "hareshsuppiah"
+          git clone https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/hareshsuppiah/targetrepo.git temp-repo
+          cd temp-repo
+          for file in $QMD_FILES; do
             mkdir -p $(dirname "$file")
             cp "../$file" "$file"
           done
           git add .
           git commit -m "Update QMD files"
-          git push
+          git -c http.extraHeader="AUTHORIZATION: bearer ${{ secrets.GH_TOKEN }}" push
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
