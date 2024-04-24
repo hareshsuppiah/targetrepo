@@ -33,7 +33,7 @@ jobs:
         run: |
           git config --global user.email "haresh@humanperformance.sg"
           git config --global user.name "hareshsuppiah"
-          git clone https://github.com/hareshsuppiah/target-repo.git temp-repo
+          git clone https://github.com/hareshsuppiah/targetrepo.git temp-repo
           cd temp-repo
           for file in ${{ steps.findfile.outputs.QMD_FILES }}; do
             mkdir -p $(dirname "$file")
