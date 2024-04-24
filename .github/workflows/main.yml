@@ -13,7 +13,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: hareshsuppiah/sourcerepo
-          token: ${{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}}
+          token: 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
           fetch-depth: 0
 
       - name: Find QMD file
