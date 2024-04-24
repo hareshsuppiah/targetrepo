@@ -34,7 +34,7 @@ jobs:
           git config --global user.email "haresh@humanperformance.sg"
           git config --global user.name "hareshsuppiah"
           git clone https://github.com/hareshsuppiah/sourcerepo.git targetrepo
-          cd temp-repo
+          cd targetrepo
           for file in ${{ steps.findfile.outputs.QMD_FILES }}; do
             mkdir -p $(dirname "$file")
             cp "../$file" "$file"
