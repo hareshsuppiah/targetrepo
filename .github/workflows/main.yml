@@ -1,12 +1,12 @@
-name: Pull QMD File
+name: Pull QMD Files
 
 on:
   schedule:
     - cron: '0 0 * * *'  # Runs at 00:00 UTC every day
-  workflow_dispatch:  # This line allows manual runs
+  workflow_dispatch:
 
 jobs:
-  check-and-pull-qmd:
+  pull-qmd-files:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source repository
@@ -15,31 +15,26 @@ jobs:
           repository: hareshsuppiah/sourcerepo
           token: ${{ secrets.GH_TOKEN }}
           fetch-depth: 0
+          path: source
 
-      - name: Find QMD file
+      - name: Find and Copy QMD Files
         run: |
-          echo "Looking for QMD files..."
-          qmd_files=$(find . -type f -name "*.qmd")
-          if [ -z "$qmd_files" ]; then
-            echo "QMD_EXISTS=false" >> $GITHUB_ENV
-          else
-            echo "QMD_EXISTS=true" >> $GITHUB_ENV
-            echo "QMD_FILES=$qmd_files" >> $GITHUB_ENV
-          fi
+          mkdir -p temp-repo
+          find source -type f -name "*.qmd" -exec cp {} temp-repo/ \;
 
-      - name: Clone target repository and push QMD files
-        if: env.QMD_EXISTS == 'true'
+      - name: Checkout target repository
+        uses: actions/checkout@v2
+        with:
+          repository: hareshsuppiah/targetrepo
+          token: ${{ secrets.GH_TOKEN }}
+          path: target
+
+      - name: Copy QMD Files to Target Repository
         run: |
+          cp temp-repo/*.qmd target/
+          cd target
           git config user.email "haresh@humanperformance.sg"
           git config user.name "hareshsuppiah"
-          git clone https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/hareshsuppiah/targetrepo.git temp-repo
-          cd temp-repo
-          for file in $QMD_FILES; do
-            mkdir -p $(dirname "$file")
-            cp "../$file" "$file"
-          done
           git add .
-          git commit -m "Update QMD files"
-          git -c http.extraHeader="AUTHORIZATION: bearer ${{ secrets.GH_TOKEN }}" push
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          git commit -m "Update QMD files from source repository"
+          git push
